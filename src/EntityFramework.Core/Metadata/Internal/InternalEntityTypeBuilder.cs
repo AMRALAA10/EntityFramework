@@ -57,6 +57,11 @@ namespace Microsoft.Data.Entity.Metadata.Internal
 
             keyBuilder = ModelBuilder.ConventionDispatcher.OnPrimaryKeySet(keyBuilder, previousPrimaryKey);
 
+            if (previousPrimaryKey != null)
+            {
+                RemoveKeyIfUnused(previousPrimaryKey);
+            }
+
             return keyBuilder;
         }
 
@@ -633,13 +638,11 @@ namespace Microsoft.Data.Entity.Metadata.Internal
 
         private RelationshipBuilderSnapshot DetachRelationship([NotNull] ForeignKey foreignKey)
         {
-            var navigationToPrincipalName = foreignKey.DependentToPrincipal?.Name;
-            var navigationToDependentName = foreignKey.PrincipalToDependent?.Name;
             var relationshipBuilder = foreignKey.Builder;
             var relationshipConfigurationSource = RemoveForeignKey(foreignKey, ConfigurationSource.Explicit, runConventions: false);
             Debug.Assert(relationshipConfigurationSource != null);
 
-            return new RelationshipBuilderSnapshot(relationshipBuilder, navigationToPrincipalName, navigationToDependentName, relationshipConfigurationSource.Value);
+            return new RelationshipBuilderSnapshot(relationshipBuilder, relationshipConfigurationSource.Value);
         }
 
         public virtual ConfigurationSource? RemoveForeignKey([NotNull] ForeignKey foreignKey, ConfigurationSource configurationSource)
@@ -909,7 +912,7 @@ namespace Microsoft.Data.Entity.Metadata.Internal
             }
             else
             {
-                relationship = GetRelationshipBuilder(existingForeignKey);
+                relationship = existingForeignKey.Builder;
                 existingForeignKey.UpdateConfigurationSource(configurationSource);
             }
 
@@ -923,16 +926,6 @@ namespace Microsoft.Data.Entity.Metadata.Internal
             return relationship;
         }
 
-        private InternalRelationshipBuilder GetRelationshipBuilder(ForeignKey foreignKey)
-        {
-            if (foreignKey.Builder == null)
-            {
-                foreignKey.Builder = new InternalRelationshipBuilder(foreignKey, ModelBuilder, ConfigurationSource.Explicit);
-            }
-
-            return foreignKey.Builder;
-        }
-
         public virtual IReadOnlyList<InternalRelationshipBuilder> GetRelationshipBuilders(
             [NotNull] EntityType principalEntityType,
             [CanBeNull] string navigationToPrincipalName,
@@ -944,21 +937,21 @@ namespace Microsoft.Data.Entity.Metadata.Internal
             {
                 existingRelationships.AddRange(Metadata
                     .FindNavigationsInHierarchy(navigationToPrincipalName)
-                    .Select(n => GetRelationshipBuilder(n.ForeignKey)));
+                    .Select(n => n.ForeignKey.Builder));
             }
 
             if (!string.IsNullOrEmpty(navigationToDependentName))
             {
                 existingRelationships.AddRange(principalEntityType
                     .FindNavigationsInHierarchy(navigationToDependentName)
-                    .Select(n => GetRelationshipBuilder(n.ForeignKey)));
+                    .Select(n => n.ForeignKey.Builder));
             }
 
             if (dependentProperties != null)
             {
                 existingRelationships.AddRange(Metadata
                     .FindForeignKeysInHierarchy(dependentProperties)
-                    .Select(GetRelationshipBuilder));
+                    .Select(fk => fk.Builder));
             }
 
             return existingRelationships;
@@ -971,8 +964,8 @@ namespace Microsoft.Data.Entity.Metadata.Internal
             ConfigurationSource configurationSource,
             bool runConventions)
         {
-            var key = Metadata.AddForeignKey(dependentProperties, principalKey, principalType, configurationSource);
-            key.Builder = new InternalRelationshipBuilder(key, ModelBuilder, null);
+            var key = Metadata.AddForeignKey(dependentProperties, principalKey, principalType, configurationSource: null);
+            key.UpdateConfigurationSource(configurationSource);
 
             var value = key.Builder;
             if (runConventions)
@@ -1346,9 +1339,7 @@ namespace Microsoft.Data.Entity.Metadata.Internal
             [NotNull] InternalModelBuilder modelBuilder,
             [NotNull] IEnumerable<Property> properties,
             ConfigurationSource configurationSource)
-            => properties.Where(property => property.DeclaringEntityType.FindProperty(property.Name) != null)
-                .Select(property => modelBuilder.Entity(property.DeclaringEntityType.Name, configurationSource)
-                    ?.Property(property.Name, configurationSource));
+            => properties.Select(property => property.Builder);
 
         private struct RelationshipSnapshot
         {
@@ -1370,26 +1361,17 @@ namespace Microsoft.Data.Entity.Metadata.Internal
         {
             public RelationshipBuilderSnapshot(
                 InternalRelationshipBuilder relationship,
-                string navigationToPrincipalName,
-                string navigationToDependentName,
                 ConfigurationSource relationshipConfigurationSource)
             {
                 Relationship = relationship;
                 RelationshipConfigurationSource = relationshipConfigurationSource;
-                NavigationToPrincipalName = navigationToPrincipalName;
-                NavigationToDependentName = navigationToDependentName;
             }
 
             private InternalRelationshipBuilder Relationship { get; }
             private ConfigurationSource RelationshipConfigurationSource { get; }
-            private string NavigationToPrincipalName { get; }
-            private string NavigationToDependentName { get; }
 
             public InternalRelationshipBuilder Attach()
-                => Relationship.Attach(
-                    NavigationToPrincipalName,
-                    NavigationToDependentName,
-                    RelationshipConfigurationSource);
+                => Relationship.Attach(RelationshipConfigurationSource);
         }
     }
 }

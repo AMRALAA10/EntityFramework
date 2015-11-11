@@ -19,7 +19,8 @@ namespace Microsoft.Data.Entity.Metadata.Conventions.Internal
             Check.NotNull(entityTypeBuilder, nameof(entityTypeBuilder));
             var entityType = entityTypeBuilder.Metadata;
 
-            if (entityType.BaseType == null)
+            if (entityType.BaseType == null
+                && entityType.FindPrimaryKey() == null)
             {
                 var candidateProperties = entityType.GetProperties().Where(p => !((IProperty)p).IsShadowProperty || !entityTypeBuilder.CanRemoveProperty(p, ConfigurationSource.Convention)).ToList();
                 var keyProperties = DiscoverKeyProperties(entityType, candidateProperties);

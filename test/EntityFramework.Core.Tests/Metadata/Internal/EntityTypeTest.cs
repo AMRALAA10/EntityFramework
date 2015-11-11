@@ -1119,6 +1119,10 @@ namespace Microsoft.Data.Entity.Metadata.Internal
             Assert.Equal(typeof(Customer).FullName, entityType.Name);
             Assert.Same(typeof(Customer), entityType.ClrType);
             Assert.Equal(ConfigurationSource.Convention, entityType.GetConfigurationSource());
+
+            entityType.UpdateConfigurationSource(ConfigurationSource.DataAnnotation);
+
+            Assert.Equal(ConfigurationSource.DataAnnotation, entityType.GetConfigurationSource());
         }
 
         [Fact]
