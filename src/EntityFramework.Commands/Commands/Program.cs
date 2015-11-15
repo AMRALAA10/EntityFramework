@@ -393,10 +393,10 @@ namespace Microsoft.Data.Entity.Commands
                 "\x1b[1m\x1b[37m" + Environment.NewLine +
                 "                     _/\\__" + Environment.NewLine +
                 "               ---==/    \\\\" + Environment.NewLine +
-                "        \x1b[22m\x1b[35m ___  ___ \x1b[1m\x1b[37m  |\x1b[22m.\x1b[1m    \\|\\" + Environment.NewLine +
-                "        \x1b[22m\x1b[35m| __|| __|\x1b[1m\x1b[37m  |  )   \\\\\\" + Environment.NewLine +
-                "        \x1b[22m\x1b[35m| _| | _| \x1b[1m\x1b[37m  \\_/ |  //|\\\\" + Environment.NewLine +
-                "        \x1b[22m\x1b[35m|___||_|  \x1b[1m\x1b[37m     /   \\\\\\/\\\\" + Environment.NewLine +
+                "        \x1b[22m\x1b[35m ___  ___   ____   \x1b[1m\x1b[37m  |\x1b[22m.\x1b[1m    \\|\\" + Environment.NewLine +
+                "        \x1b[22m\x1b[35m| __|| __| |_   /           \x1b[1m\x1b[37m  |  )   \\\\\\" + Environment.NewLine +
+                "        \x1b[22m\x1b[35m| _| | _|    / /            \x1b[1m\x1b[37m  \\_/ |  //|\\\\" + Environment.NewLine +
+                "        \x1b[22m\x1b[35m|___||_|    /_/             \x1b[1m\x1b[37m     /   \\\\\\/\\\\" + Environment.NewLine +
                 "\x1b[22m\x1b[39m");
         }
 
